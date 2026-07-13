@@ -35,8 +35,10 @@ import {
   summarizeVoiceNote,
   updateInteraction,
 } from '@/store/slices/interactionsSlice';
+import { AIAssistantPanel } from '@/components/assistant/AIAssistantPanel';
 import { INTERACTION_TYPES, SENTIMENT_OPTIONS } from '@/utils';
 import type { Interaction, InteractionType, Sentiment } from '@/types';
+import type { AssistantFormFields } from '@/types/assistant';
 
 const logInteractionSchema = z.object({
   doctor_name: z.string().min(2, 'Doctor name is required'),
@@ -265,6 +267,42 @@ export function LogInteractionPage() {
     }
   };
 
+  const handleApplyAssistantFields = useCallback(
+    (fields: AssistantFormFields) => {
+      if (fields.doctor_name) {
+        setValue('doctor_name', fields.doctor_name, { shouldDirty: true });
+      }
+      if (fields.interaction_type) {
+        setValue('interaction_type', fields.interaction_type, { shouldDirty: true });
+      }
+      if (fields.interaction_date) {
+        setValue('interaction_date', fields.interaction_date, { shouldDirty: true });
+      }
+      if (fields.interaction_time) {
+        setValue('interaction_time', fields.interaction_time.slice(0, 5), { shouldDirty: true });
+      }
+      if (fields.topics?.length) {
+        setValue('topics', fields.topics.join(', '), { shouldDirty: true });
+      }
+      if (fields.materials_shared) {
+        setValue('materials_shared', fields.materials_shared, { shouldDirty: true });
+      }
+      if (fields.samples) {
+        setValue('samples', fields.samples, { shouldDirty: true });
+      }
+      if (fields.sentiment) {
+        setValue('sentiment', fields.sentiment, { shouldDirty: true });
+      }
+      if (fields.outcome) {
+        setValue('outcome', fields.outcome, { shouldDirty: true });
+      }
+      if (fields.follow_up) {
+        setValue('follow_up', fields.follow_up, { shouldDirty: true });
+      }
+    },
+    [setValue]
+  );
+
   const toggleRecording = () => {
     const win = window as Window & {
       webkitSpeechRecognition?: new () => SpeechRecognition;
@@ -325,7 +363,7 @@ export function LogInteractionPage() {
   const formDisabled = isReadOnly;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
@@ -348,8 +386,8 @@ export function LogInteractionPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(handleSave)} className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <form onSubmit={handleSubmit(handleSave)} className="grid gap-6 xl:grid-cols-12">
+        <div className="space-y-6 xl:col-span-7">
           <Card
             title="Healthcare Professional"
             description="Doctor and attendee information"
@@ -461,7 +499,14 @@ export function LogInteractionPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 xl:col-span-5">
+          <div className="xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
+            <AIAssistantPanel
+              onApplyFields={handleApplyAssistantFields}
+              disabled={formDisabled}
+            />
+          </div>
+
           <Card
             title="Voice Note"
             description="Dictate or paste visit notes for AI summarization"
