@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
 
-from app.ai.llm import get_llm
+from app.ai.groq_service import get_groq_service
 from app.ai.tools.base import BaseToolOutput, ToolContext, ToolError
-from app.ai.utils import safe_parse_llm_json
 from app.core.logging import get_logger
 from app.crud import material as material_crud
 
@@ -91,7 +90,7 @@ class MaterialRecommendationTool:
                 catalog = "No catalog items available. Suggest common HCP brochure types."
                 catalog_map = {}
 
-            llm = get_llm()
+            groq = get_groq_service()
             prompt = MATERIAL_PROMPT.format(
                 doctor_name=input_data.doctor_name or "Unknown",
                 specialty=input_data.specialty or "Unknown",
@@ -100,9 +99,7 @@ class MaterialRecommendationTool:
                 sentiment=input_data.sentiment or "unknown",
                 catalog=catalog,
             )
-            response = llm.invoke(prompt)
-            content = response.content if isinstance(response.content, str) else str(response.content)
-            parsed = safe_parse_llm_json(content, fallback={})
+            parsed = groq.invoke_json(prompt, fallback={})
 
             raw_materials = parsed.get("recommended_materials", [])
             recommended: list[RecommendedMaterial] = []

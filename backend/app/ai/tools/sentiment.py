@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
 
-from app.ai.llm import get_llm
+from app.ai.groq_service import get_groq_service
 from app.ai.tools.base import BaseToolOutput, ToolContext, ToolError
-from app.ai.utils import safe_parse_llm_json
 from app.core.logging import get_logger
 from app.models import Sentiment
 
@@ -50,11 +49,9 @@ class SentimentTool:
         del ctx  # Independent LLM tool; no DB required
 
         try:
-            llm = get_llm()
+            groq = get_groq_service()
             prompt = SENTIMENT_PROMPT.format(text=input_data.text)
-            response = llm.invoke(prompt)
-            content = response.content if isinstance(response.content, str) else str(response.content)
-            parsed = safe_parse_llm_json(content, fallback={})
+            parsed = groq.invoke_json(prompt, fallback={})
 
             sentiment_value = parsed.get("sentiment")
             sentiment: Sentiment | None = None

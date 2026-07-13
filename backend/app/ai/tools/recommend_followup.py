@@ -3,33 +3,13 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.ai.llm import get_llm
+from app.ai.groq_service import FollowupRecommendationRequest, get_groq_service
 from app.ai.tools.base import BaseToolOutput, ToolContext, ToolError
-from app.ai.utils import safe_parse_llm_json
 from app.core.logging import get_logger
 from app.crud import interaction as interaction_crud
 
 logger = get_logger(__name__)
 
-FOLLOWUP_PROMPT = """You are an HCP CRM advisor. Generate follow-up recommendations.
-
-Respond ONLY with valid JSON:
-{{
-  "recommendations": ["<actionable recommendation>"],
-  "suggested_date": "YYYY-MM-DD or null",
-  "priority": "high|medium|low",
-  "rationale": "<brief rationale>"
-}}
-
-Interaction context:
-Doctor: {doctor_name}
-Type: {interaction_type}
-Date: {interaction_date}
-Topics: {topics}
-Sentiment: {sentiment}
-Outcome: {outcome}
-Samples: {samples}
-"""
 
 class RecommendFollowupInput(BaseModel):
     interaction_id: UUID | None = None
@@ -90,40 +70,42 @@ class RecommendFollowupTool:
                 outcome = interaction.outcome or "None"
                 samples = interaction.samples or "None"
 
-            llm = get_llm()
-            prompt = FOLLOWUP_PROMPT.format(
-                doctor_name=doctor_name,
-                interaction_type=interaction_type,
-                interaction_date=interaction_date,
-                topics=", ".join(topics) if topics else "None",
-                sentiment=sentiment,
-                outcome=outcome,
-                samples=samples,
+            groq = get_groq_service()
+            result = groq.recommend_followup(
+                FollowupRecommendationRequest(
+                    doctor_name=doctor_name,
+                    interaction_type=interaction_type,
+                    interaction_date=interaction_date,
+                    topics=topics,
+                    sentiment=sentiment,
+                    outcome=outcome,
+                    samples=samples,
+                ),
             )
-            response = llm.invoke(prompt)
-            content = response.content if isinstance(response.content, str) else str(response.content)
-            parsed = safe_parse_llm_json(content, fallback={})
+
+            if not result.success:
+                return RecommendFollowupOutput(
+                    success=False,
+                    message=result.message,
+                    errors=[ToolError(code=err.code, message=err.message) for err in result.errors],
+                )
 
             suggested_date = None
-            if parsed.get("suggested_date"):
+            if result.suggested_date:
                 try:
-                    suggested_date = date.fromisoformat(parsed["suggested_date"])
+                    suggested_date = date.fromisoformat(result.suggested_date)
                 except ValueError:
                     suggested_date = None
 
-            recommendations = parsed.get("recommendations", [])
-            if not recommendations:
-                recommendations = ["Schedule a follow-up call to discuss outcomes"]
-
-            logger.info("tool_recommend_followup_success", count=len(recommendations))
+            logger.info("tool_recommend_followup_success", count=len(result.recommendations))
 
             return RecommendFollowupOutput(
                 success=True,
                 message="Follow-up recommendations generated",
-                recommendations=recommendations,
+                recommendations=result.recommendations,
                 suggested_date=suggested_date,
-                priority=parsed.get("priority", "medium"),
-                rationale=parsed.get("rationale", ""),
+                priority=result.priority,
+                rationale=result.rationale,
             )
 
         except Exception as exc:

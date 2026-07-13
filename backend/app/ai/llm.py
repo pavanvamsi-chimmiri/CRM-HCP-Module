@@ -1,15 +1,5 @@
-from functools import lru_cache
+"""Backward-compatible LLM accessor. Prefer app.ai.groq_service.get_groq_service()."""
 
-from langchain_groq import ChatGroq
+from app.ai.groq_service import get_groq_service, get_llm
 
-from app.core.config import settings
-
-
-@lru_cache
-def get_llm() -> ChatGroq:
-    return ChatGroq(
-        model=settings.GROQ_MODEL,
-        groq_api_key=settings.GROQ_API_KEY or None,
-        temperature=settings.GROQ_TEMPERATURE,
-        max_tokens=settings.GROQ_MAX_TOKENS,
-    )
+__all__ = ["get_llm", "get_groq_service"]

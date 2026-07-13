@@ -2,35 +2,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.ai.llm import get_llm
+from app.ai.groq_service import SummarizeRequest, get_groq_service
 from app.ai.tools.base import BaseToolOutput, ToolContext, ToolError
-from app.ai.utils import safe_parse_llm_json
 from app.core.logging import get_logger
 from app.crud import interaction as interaction_crud
 
 logger = get_logger(__name__)
-
-SUMMARIZE_PROMPT = """Summarize this healthcare professional (HCP) interaction.
-
-Provide a concise professional summary for a CRM record.
-
-Respond ONLY with valid JSON:
-{{
-  "summary": "<2-3 sentence summary>",
-  "key_points": ["<point>"],
-  "outcome_highlight": "<main outcome>"
-}}
-
-Interaction details:
-Doctor: {doctor_name}
-Type: {interaction_type}
-Date: {interaction_date}
-Topics: {topics}
-Sentiment: {sentiment}
-Outcome: {outcome}
-Samples: {samples}
-Notes: {notes}
-"""
 
 
 class SummarizeInteractionInput(BaseModel):
@@ -70,7 +47,7 @@ class SummarizeInteractionTool:
             sentiment = "unknown"
             outcome = input_data.outcome
             samples = ""
-            notes = input_data.text or ""
+            text = input_data.text or ""
 
             if input_data.interaction_id:
                 interaction = await interaction_crud.get_with_relations(
@@ -92,47 +69,46 @@ class SummarizeInteractionTool:
                 sentiment = interaction.sentiment.value if interaction.sentiment else "unknown"
                 outcome = interaction.outcome
                 samples = interaction.samples or ""
-                notes = outcome or input_data.text or ""
+                text = outcome or input_data.text or ""
 
-            if not notes and not topics and not outcome:
+            if not text and not topics and not outcome:
                 return SummarizeInteractionOutput(
                     success=False,
                     message="No interaction content to summarize",
                     errors=[ToolError(code="NO_CONTENT", message="Provide interaction_id or text")],
                 )
 
-            llm = get_llm()
-            prompt = SUMMARIZE_PROMPT.format(
-                doctor_name=doctor_name,
-                interaction_type=interaction_type,
-                interaction_date=interaction_date,
-                topics=", ".join(topics) if topics else "None",
-                sentiment=sentiment,
-                outcome=outcome or "None",
-                samples=samples or "None",
-                notes=notes,
-            )
-            response = llm.invoke(prompt)
-            content = response.content if isinstance(response.content, str) else str(response.content)
-            parsed = safe_parse_llm_json(content, fallback={})
-
-            output = SummarizeInteractionOutput(
-                success=True,
-                message="Interaction summarized successfully",
-                summary=parsed.get("summary", ""),
-                key_points=parsed.get("key_points", []),
-                outcome_highlight=parsed.get("outcome_highlight", ""),
+            groq = get_groq_service()
+            result = groq.summarize(
+                SummarizeRequest(
+                    text=text,
+                    doctor_name=doctor_name,
+                    interaction_type=interaction_type,
+                    interaction_date=interaction_date,
+                    topics=topics,
+                    sentiment=sentiment,
+                    outcome=outcome,
+                    samples=samples,
+                ),
             )
 
-            if not output.summary:
-                output = SummarizeInteractionOutput(
+            if not result.success:
+                return SummarizeInteractionOutput(
                     success=False,
-                    message="Failed to generate summary",
-                    errors=[ToolError(code="LLM_PARSE_FAILED", message="Empty summary from model")],
+                    message=result.message,
+                    errors=[
+                        ToolError(code=err.code, message=err.message) for err in result.errors
+                    ],
                 )
 
             logger.info("tool_summarize_interaction_success")
-            return output
+            return SummarizeInteractionOutput(
+                success=True,
+                message="Interaction summarized successfully",
+                summary=result.summary,
+                key_points=result.key_points,
+                outcome_highlight=result.outcome_highlight,
+            )
 
         except Exception as exc:
             logger.error("tool_summarize_interaction_failed", error=str(exc))

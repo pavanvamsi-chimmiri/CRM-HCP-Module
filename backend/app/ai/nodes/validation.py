@@ -1,10 +1,9 @@
 import json
 
-from app.ai.llm import get_llm
+from app.ai.groq_service import get_groq_service
 from app.ai.prompts.hcp_agent import VALIDATION_PROMPT
 from app.ai.schemas import ValidationResult
 from app.ai.state import AgentState
-from app.ai.utils import safe_parse_llm_json
 from app.core.logging import get_logger
 from app.models import InteractionType, Sentiment
 
@@ -60,14 +59,12 @@ def validate_entities(state: AgentState) -> dict:
             "validation_warnings": rule_result.warnings,
         }
 
-    llm = get_llm()
+    groq = get_groq_service()
     prompt = VALIDATION_PROMPT.format(
         intent=intent,
         entities=json.dumps(entities, indent=2),
     )
-    response = llm.invoke(prompt)
-    content = response.content if isinstance(response.content, str) else str(response.content)
-    parsed = safe_parse_llm_json(content, fallback={})
+    parsed = groq.invoke_json(prompt, fallback={})
 
     try:
         llm_result = ValidationResult.model_validate(parsed)
