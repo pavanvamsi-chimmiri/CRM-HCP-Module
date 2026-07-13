@@ -6,7 +6,13 @@ from fastapi import APIRouter, Query, status
 from app.api.deps import CurrentUser, DbSession
 from app.models import InteractionType, Sentiment
 from app.schemas.common import Message, PaginatedResponse
-from app.schemas.interaction import InteractionCreate, InteractionRead, InteractionUpdate
+from app.schemas.interaction import (
+    InteractionCreate,
+    InteractionRead,
+    InteractionSummarizeRequest,
+    InteractionSummarizeResponse,
+    InteractionUpdate,
+)
 from app.services.interaction import interaction_service
 
 router = APIRouter(prefix="/interactions", tags=["Interactions"])
@@ -49,6 +55,17 @@ async def create_interaction(
     interaction_in: InteractionCreate,
 ) -> InteractionRead:
     return await interaction_service.create(db, interaction_in=interaction_in, owner=current_user)
+
+
+@router.post("/summarize", response_model=InteractionSummarizeResponse)
+async def summarize_interaction_notes(
+    db: DbSession,
+    current_user: CurrentUser,
+    body: InteractionSummarizeRequest,
+) -> InteractionSummarizeResponse:
+    return await interaction_service.summarize_notes(
+        db, text=body.text, doctor_name=body.doctor_name, owner=current_user
+    )
 
 
 @router.get("/{interaction_id}", response_model=InteractionRead)

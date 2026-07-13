@@ -54,8 +54,11 @@ class Interaction(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=True,
         index=True,
     )
+    attendees: Mapped[str | None] = mapped_column(Text, nullable=True)
+    materials_shared: Mapped[str | None] = mapped_column(Text, nullable=True)
     outcome: Mapped[str | None] = mapped_column(Text, nullable=True)
     samples: Mapped[str | None] = mapped_column(Text, nullable=True)
+    follow_up: Mapped[str | None] = mapped_column(Text, nullable=True)
     owner_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),

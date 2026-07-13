@@ -15,10 +15,13 @@ export interface Interaction {
   interaction_type: InteractionType;
   interaction_date: string;
   interaction_time: string;
+  attendees: string | null;
   topics: string[];
+  materials_shared: string | null;
   sentiment: Sentiment | null;
   outcome: string | null;
   samples: string | null;
+  follow_up: string | null;
   owner_id: string;
   created_at: string;
   updated_at: string;
@@ -29,10 +32,33 @@ export interface InteractionCreate {
   interaction_type: InteractionType;
   interaction_date: string;
   interaction_time: string;
+  attendees?: string | null;
   topics: string[];
+  materials_shared?: string | null;
   sentiment?: Sentiment | null;
   outcome?: string | null;
   samples?: string | null;
+  follow_up?: string | null;
+}
+
+export interface InteractionUpdate {
+  doctor_name?: string;
+  interaction_type?: InteractionType;
+  interaction_date?: string;
+  interaction_time?: string;
+  attendees?: string | null;
+  topics?: string[];
+  materials_shared?: string | null;
+  sentiment?: Sentiment | null;
+  outcome?: string | null;
+  samples?: string | null;
+  follow_up?: string | null;
+}
+
+export interface InteractionSummarizeResponse {
+  summary: string;
+  key_points: string[];
+  outcome_highlight: string;
 }
 
 export interface InteractionStats {

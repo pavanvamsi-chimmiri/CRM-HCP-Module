@@ -8,7 +8,13 @@ from app.crud import hcp as hcp_crud
 from app.crud import interaction as interaction_crud
 from app.models import InteractionType, Sentiment, User
 from app.schemas.common import PaginatedResponse
-from app.schemas.interaction import InteractionCreate, InteractionRead, InteractionUpdate
+from app.ai.groq_service import SummarizeRequest, get_groq_service
+from app.schemas.interaction import (
+    InteractionCreate,
+    InteractionRead,
+    InteractionSummarizeResponse,
+    InteractionUpdate,
+)
 
 
 class InteractionService:
@@ -155,6 +161,38 @@ class InteractionService:
             "pending_followups": pending_followups,
             "this_month": total,
         }
+
+    async def summarize_notes(
+        self,
+        db: AsyncSession,
+        *,
+        text: str,
+        doctor_name: str | None,
+        owner: User,
+    ) -> InteractionSummarizeResponse:
+        groq = get_groq_service()
+        result = groq.summarize(
+            SummarizeRequest(
+                text=text,
+                doctor_name=doctor_name or "Unknown",
+                interaction_type="unknown",
+                interaction_date="unknown",
+                topics=[],
+                sentiment="unknown",
+                outcome=None,
+                samples=None,
+            )
+        )
+        if not result.success:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=result.message or "Failed to summarize voice note",
+            )
+        return InteractionSummarizeResponse(
+            summary=result.summary,
+            key_points=result.key_points,
+            outcome_highlight=result.outcome_highlight,
+        )
 
 
 interaction_service = InteractionService()

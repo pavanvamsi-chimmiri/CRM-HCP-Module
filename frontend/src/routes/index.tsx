@@ -58,6 +58,7 @@ export function AppRoutes() {
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/log-interaction" element={<LogInteractionPage />} />
+              <Route path="/log-interaction/:id" element={<LogInteractionPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
