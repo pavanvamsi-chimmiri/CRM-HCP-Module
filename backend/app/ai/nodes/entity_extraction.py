@@ -15,6 +15,11 @@ def extract_entities(state: AgentState) -> dict:
         EntityExtractionRequest(text=user_input, intent=intent),
     )
 
-    logger.info("entities_extracted", doctor_name=result.entities.get("doctor_name"))
+    entities = result.entities
+    logger.info(
+        "entities_extracted",
+        doctor_name=entities.get("doctor_name"),
+        offline=not groq.is_configured,
+    )
 
-    return {"entities": result.entities}
+    return {"entities": entities}

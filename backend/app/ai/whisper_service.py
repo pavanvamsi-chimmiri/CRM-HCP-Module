@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.logging import get_logger

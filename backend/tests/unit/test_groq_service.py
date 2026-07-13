@@ -14,7 +14,7 @@ from app.ai.groq_service import (
 
 def test_groq_service_uses_env_defaults() -> None:
     service = GroqService()
-    assert service.model == "gemma2-9b-it"
+    assert service.model == "llama-3.3-70b-versatile"
 
 
 def test_chat_request_schema() -> None:
@@ -23,7 +23,7 @@ def test_chat_request_schema() -> None:
 
 
 def test_chat_response_json() -> None:
-    resp = ChatResponse(success=True, model="gemma2-9b-it", content="Hi")
+    resp = ChatResponse(success=True, model="llama-3.3-70b-versatile", content="Hi")
     payload = resp.model_dump()
     assert payload["success"] is True
     assert payload["content"] == "Hi"
@@ -33,7 +33,7 @@ def test_chat_response_json() -> None:
 def test_summarize_response_json() -> None:
     resp = SummarizeResponse(
         success=True,
-        model="gemma2-9b-it",
+        model="llama-3.3-70b-versatile",
         summary="Visit went well",
         key_points=["Discussed protocol"],
         outcome_highlight="Positive reception",
@@ -46,7 +46,7 @@ def test_summarize_response_json() -> None:
 def test_entity_extraction_response_json() -> None:
     resp = EntityExtractionResponse(
         success=True,
-        model="gemma2-9b-it",
+        model="llama-3.3-70b-versatile",
         entities={"doctor_name": "Dr. Smith"},
     )
     assert resp.entities["doctor_name"] == "Dr. Smith"
@@ -56,7 +56,7 @@ def test_entity_extraction_response_json() -> None:
 def test_followup_recommendation_response_json() -> None:
     resp = FollowupRecommendationResponse(
         success=True,
-        model="gemma2-9b-it",
+        model="llama-3.3-70b-versatile",
         recommendations=["Call in 2 weeks"],
         priority="high",
     )

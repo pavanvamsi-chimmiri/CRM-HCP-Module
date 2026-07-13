@@ -7,12 +7,10 @@ import toast from 'react-hot-toast';
 import {
   Calendar,
   Clock,
-  FileText,
   Pencil,
   Save,
   Stethoscope,
   Trash2,
-  Users,
   X,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -271,8 +269,37 @@ export function LogInteractionPage() {
   const isEditing = Boolean(editingId);
   const formDisabled = isReadOnly;
 
+  const actionButtons = (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button
+        type="submit"
+        size="lg"
+        isLoading={isSubmitting}
+        disabled={formDisabled}
+      >
+        <Save className="h-4 w-4" />
+        {isEditing ? 'Save Changes' : 'Save Interaction'}
+      </Button>
+      <Button type="button" variant="secondary" onClick={handleEdit} disabled={formDisabled}>
+        <Pencil className="h-4 w-4" />
+        {isReadOnly ? 'Enable Edit' : 'Edit'}
+      </Button>
+      <Button type="button" variant="ghost" onClick={handleClear}>
+        <X className="h-4 w-4" />
+        Clear
+      </Button>
+      {editingId && (
+        <Button type="button" variant="danger" onClick={handleDelete}>
+          <Trash2 className="h-4 w-4" />
+          Delete
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 pb-24 sm:pb-0">
+      <form id="log-interaction-form" onSubmit={handleSubmit(handleSave)} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
@@ -293,9 +320,10 @@ export function LogInteractionPage() {
             {isDirty && !isReadOnly && <Badge variant="warning">Unsaved changes</Badge>}
           </div>
         </div>
+        <div className="hidden sm:block">{actionButtons}</div>
       </div>
 
-      <form onSubmit={handleSubmit(handleSave)} className="grid gap-6 xl:grid-cols-12">
+      <div className="grid gap-6 xl:grid-cols-12">
         <div className="space-y-6 xl:col-span-7">
           <Card
             title="Healthcare Professional"
@@ -406,15 +434,22 @@ export function LogInteractionPage() {
               />
             </div>
           </Card>
+
+          <Card title="Save Interaction" description="Review your entries and save the record">
+            <div className="space-y-4">
+              {actionButtons}
+              <p className="text-xs text-slate-500">
+                Required fields: Doctor Name, Interaction Type, Date, and Time
+              </p>
+            </div>
+          </Card>
         </div>
 
         <div className="space-y-6 xl:col-span-5">
-          <div className="xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
-            <AIAssistantPanel
+          <AIAssistantPanel
               onApplyFields={handleApplyAssistantFields}
               disabled={formDisabled}
-            />
-          </div>
+          />
 
           <VoiceUploadPanel
             onApplyFields={handleApplyAssistantFields}
@@ -464,60 +499,24 @@ export function LogInteractionPage() {
               </div>
             </Card>
           )}
-
-          <Card>
-            <div className="space-y-3">
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                isLoading={isSubmitting}
-                disabled={formDisabled}
-              >
-                <Save className="h-4 w-4" />
-                {isEditing ? 'Save Changes' : 'Save'}
-              </Button>
-
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                onClick={handleEdit}
-              >
-                <Pencil className="h-4 w-4" />
-                {isReadOnly ? 'Enable Edit' : 'Edit'}
-              </Button>
-
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <Button type="button" variant="ghost" onClick={handleClear}>
-                  <X className="h-4 w-4" />
-                  Clear
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  onClick={handleDelete}
-                  disabled={!editingId}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Users className="h-3.5 w-3.5" />
-                Attendees, materials, and follow-ups are saved with each record
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <FileText className="h-3.5 w-3.5" />
-                Upload audio to transcribe, summarize, and auto-fill the form
-              </div>
-            </div>
-          </Card>
         </div>
+      </div>
       </form>
+
+      {/* Mobile sticky save bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white p-4 shadow-lg sm:hidden lg:left-64">
+        <Button
+          type="submit"
+          form="log-interaction-form"
+          className="w-full"
+          size="lg"
+          isLoading={isSubmitting}
+          disabled={formDisabled}
+        >
+          <Save className="h-4 w-4" />
+          {isEditing ? 'Save Changes' : 'Save Interaction'}
+        </Button>
+      </div>
     </div>
   );
 }

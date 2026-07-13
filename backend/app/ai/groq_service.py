@@ -13,6 +13,23 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+GROQ_PLACEHOLDER_KEYS = frozenset(
+    {
+        "",
+        "your-groq-api-key-here",
+        "changeme",
+        "change-me",
+        "sk-your-key-here",
+    }
+)
+
+
+def is_groq_configured(api_key: str | None) -> bool:
+    key = (api_key or "").strip()
+    if not key:
+        return False
+    return key.lower() not in GROQ_PLACEHOLDER_KEYS and not key.lower().startswith("your-")
+
 
 # -----------------------------------------------------------------------------
 # Request / Response schemas (structured JSON)
@@ -182,7 +199,7 @@ Samples: {samples}
 
 
 class GroqService:
-    """Centralized Groq API service using gemma2-9b-it with structured JSON outputs."""
+    """Centralized Groq API service with structured JSON outputs."""
 
     def __init__(
         self,
@@ -197,8 +214,12 @@ class GroqService:
         self.temperature = temperature if temperature is not None else settings.GROQ_TEMPERATURE
         self.max_tokens = max_tokens if max_tokens is not None else settings.GROQ_MAX_TOKENS
 
-        if not self.api_key:
+        if not is_groq_configured(self.api_key):
             logger.warning("groq_api_key_missing")
+
+    @property
+    def is_configured(self) -> bool:
+        return is_groq_configured(self.api_key)
 
     def _build_client(self, *, temperature: float | None = None, max_tokens: int | None = None) -> ChatGroq:
         return ChatGroq(
@@ -209,6 +230,9 @@ class GroqService:
         )
 
     def _invoke_text(self, prompt: str, *, system_prompt: str | None = None) -> str:
+        if not self.is_configured:
+            raise RuntimeError("Groq API key is not configured")
+
         messages: list[SystemMessage | HumanMessage] = []
         if system_prompt:
             messages.append(SystemMessage(content=system_prompt))
@@ -227,8 +251,13 @@ class GroqService:
         fallback: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Invoke Groq and parse a JSON object from the response."""
-        raw = self._invoke_text(prompt, system_prompt=system_prompt)
-        return safe_parse_llm_json(raw, fallback=fallback or {})
+        fallback_data = fallback or {}
+        try:
+            raw = self._invoke_text(prompt, system_prompt=system_prompt)
+            return safe_parse_llm_json(raw, fallback=fallback_data)
+        except Exception as exc:
+            logger.warning("groq_invoke_json_failed", error=str(exc))
+            return fallback_data
 
     @staticmethod
     def _serialize_entities(entities: ExtractedEntities) -> dict[str, Any]:
@@ -326,30 +355,50 @@ class GroqService:
 
     def extract_entities(self, request: EntityExtractionRequest) -> EntityExtractionResponse:
         """Extract HCP interaction entities and return structured JSON."""
+        from app.ai.rule_based_extraction import extract_entities_rule_based
+
         try:
             prompt = ENTITY_EXTRACTION_PROMPT.format(intent=request.intent, text=request.text)
-            parsed = self.invoke_json(prompt, fallback={})
+            parsed = self.invoke_json(prompt, fallback={}) if self.is_configured else {}
 
             try:
                 entities = ExtractedEntities.model_validate(parsed)
                 serialized = self._serialize_entities(entities)
-                success = True
+                success = bool(serialized)
             except ValidationError:
                 entities = ExtractedEntities()
                 serialized = self._serialize_entities(entities)
                 success = bool(parsed)
 
-            logger.info("groq_entity_extraction_success", model=self.model)
+            if not serialized.get("doctor_name"):
+                rule_entities = extract_entities_rule_based(request.text)
+                serialized = {**rule_entities, **{k: v for k, v in serialized.items() if v}}
+                success = bool(serialized)
+
+            message = (
+                "Entity extraction successful"
+                if success and self.is_configured
+                else "Entity extraction completed using offline rules"
+            )
+            logger.info("groq_entity_extraction_success", model=self.model, offline=not self.is_configured)
 
             return EntityExtractionResponse(
                 success=success,
                 model=self.model,
                 entities=serialized,
-                message="Entity extraction successful",
+                message=message,
             )
 
         except Exception as exc:
             logger.error("groq_entity_extraction_failed", error=str(exc))
+            rule_entities = extract_entities_rule_based(request.text)
+            if rule_entities:
+                return EntityExtractionResponse(
+                    success=True,
+                    model=self.model,
+                    entities=rule_entities,
+                    message="Entity extraction completed using offline rules",
+                )
             return EntityExtractionResponse(
                 success=False,
                 model=self.model,

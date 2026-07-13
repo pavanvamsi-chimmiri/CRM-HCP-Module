@@ -23,12 +23,18 @@ class AssistantService:
             materials_shared = str(materials) if materials else None
 
         follow_up_parts: list[str] = []
-        if entities.get("follow_up"):
-            follow_up_parts.append(str(entities["follow_up"]))
-        if entities.get("followup_notes"):
-            follow_up_parts.append(str(entities["followup_notes"]))
-        if entities.get("followup_date"):
-            follow_up_parts.append(f"Follow up on {entities['followup_date']}")
+        follow_up_value = entities.get("follow_up")
+        followup_notes = entities.get("followup_notes")
+        followup_date = entities.get("followup_date")
+
+        if follow_up_value:
+            follow_up_parts.append(str(follow_up_value))
+        elif followup_notes:
+            follow_up_parts.append(str(followup_notes))
+
+        if followup_date:
+            follow_up_parts.append(f"Follow up on {followup_date}")
+
         follow_up = ". ".join(follow_up_parts) if follow_up_parts else None
 
         interaction_time = entities.get("interaction_time")
@@ -96,7 +102,7 @@ class AssistantService:
         if content_type not in ALLOWED_AUDIO_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=f"Unsupported audio format. Allowed: mp3, wav, m4a, webm, ogg",
+                detail="Unsupported audio format. Allowed: mp3, wav, m4a, webm, ogg",
             )
 
         whisper = get_whisper_service()

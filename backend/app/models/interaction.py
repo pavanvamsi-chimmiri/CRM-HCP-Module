@@ -4,12 +4,12 @@ import enum
 from datetime import date, time
 from uuid import UUID
 
-from sqlalchemy import Date, Enum, ForeignKey, String, Text, Time
+from sqlalchemy import Date, ForeignKey, String, Text, Time
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, pg_enum
 from app.models.associations import interaction_materials
 
 
@@ -42,7 +42,7 @@ class Interaction(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     doctor_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     interaction_type: Mapped[InteractionType] = mapped_column(
-        Enum(InteractionType, name="interaction_type"),
+        pg_enum(InteractionType, "interaction_type"),
         nullable=False,
         index=True,
     )
@@ -50,7 +50,7 @@ class Interaction(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     interaction_time: Mapped[time] = mapped_column(Time, nullable=False)
     topics: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     sentiment: Mapped[Sentiment | None] = mapped_column(
-        Enum(Sentiment, name="sentiment"),
+        pg_enum(Sentiment, "sentiment"),
         nullable=True,
         index=True,
     )

@@ -1,9 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.ai.graphs.assistant_graph import compile_assistant_graph
 from app.ai.assistant_state import AssistantState
+from app.ai.graphs.assistant_graph import compile_assistant_graph
 from app.core.config import settings
 from app.core.logging import get_logger
 

@@ -16,9 +16,13 @@ Context:
 - Recommendations: {recommendations}
 - Interaction saved: {interaction_saved}
 - Saved interaction ID: {saved_interaction_id}
+- Search results: {search_results}
+- Summary: {summary}
+- Tool results: {tool_results}
 
 If interaction was saved, confirm what was recorded.
 If validation failed, explain what information is missing.
+If search results or a summary are present, present them clearly.
 Include relevant recommendations naturally. Keep response concise (2-4 sentences).
 
 User message:
@@ -36,6 +40,9 @@ def generate_response(state: AgentState) -> dict:
         recommendations=json.dumps(state.get("recommendations", [])),
         interaction_saved=state.get("interaction_saved", False),
         saved_interaction_id=state.get("saved_interaction_id"),
+        search_results=json.dumps(state.get("search_results", [])),
+        summary=state.get("summary", ""),
+        tool_results=json.dumps(state.get("tool_results", {})),
         user_input=state.get("user_input", ""),
     )
 

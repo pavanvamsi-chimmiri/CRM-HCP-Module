@@ -4,8 +4,10 @@ Analyze the user message and classify the intent.
 
 Possible intents:
 - log_interaction: User wants to record/log a doctor visit, call, or meeting
-- query_interaction: User wants to retrieve or summarize past interactions
-- schedule_followup: User wants to plan a follow-up action
+- query_interaction: User wants to retrieve or search past interactions
+- summarize_interaction: User wants a summary of visit notes or a past interaction
+- edit_interaction: User wants to update/modify an existing interaction record
+- schedule_followup: User wants follow-up recommendations or to plan a follow-up action
 - general: General question or conversation not fitting above
 
 Respond ONLY with valid JSON:
@@ -25,6 +27,7 @@ Extract structured fields from the user message. Use null for missing fields.
 
 Fields:
 - doctor_name: full name of the doctor/HCP
+- interaction_id: UUID of an existing interaction when editing or summarizing by ID
 - interaction_type: one of in_person, phone_call, video_call, email, conference, other
 - interaction_date: ISO date YYYY-MM-DD (use today's date if relative like "today")
 - interaction_time: ISO time HH:MM:SS (24h format)

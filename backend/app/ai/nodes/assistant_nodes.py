@@ -1,9 +1,9 @@
 import json
 from datetime import date, datetime
 
+from app.ai.assistant_state import AssistantState
 from app.ai.groq_service import ChatMessage, ChatRequest, get_groq_service
 from app.ai.prompts.assistant import ASSISTANT_MISSING_FIELDS_PROMPT, ASSISTANT_RESPONSE_PROMPT
-from app.ai.assistant_state import AssistantState
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

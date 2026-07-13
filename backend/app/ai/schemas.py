@@ -9,7 +9,7 @@ from app.models import InteractionType, Sentiment
 
 class IntentResult(BaseModel):
     intent: str = Field(
-        description="Detected intent: log_interaction, query_interaction, schedule_followup, general"
+        description="Detected intent: log_interaction, query_interaction, summarize_interaction, edit_interaction, schedule_followup, general"
     )
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str = ""

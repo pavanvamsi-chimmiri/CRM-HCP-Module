@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, File, UploadFile
 
 from app.api.deps import CurrentUser
@@ -19,7 +21,7 @@ async def parse_assistant_message(
 @router.post("/voice", response_model=VoiceUploadResponse)
 async def upload_voice_note(
     current_user: CurrentUser,
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
 ) -> VoiceUploadResponse:
     """
     Upload audio, transcribe with Groq Whisper, summarize, extract fields,
