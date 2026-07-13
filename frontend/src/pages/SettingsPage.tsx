@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +23,7 @@ export function SettingsPage() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -30,6 +32,15 @@ export function SettingsPage() {
       email: user?.email || '',
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      reset({
+        full_name: user.full_name,
+        email: user.email,
+      });
+    }
+  }, [user, reset]);
 
   const onSubmit = async (_data: ProfileForm) => {
     toast.success('Profile settings saved');

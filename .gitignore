@@ -16,6 +16,9 @@ ENV/
 
 # Build outputs
 dist/
+
+# TypeScript build info
+*.tsbuildinfo
 build/
 *.egg-info/
 .eggs/

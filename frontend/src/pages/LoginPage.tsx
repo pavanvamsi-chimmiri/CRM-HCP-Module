@@ -108,15 +108,17 @@ export function LoginPage() {
 export function RegisterPage() {
   const navigate = useNavigate();
 
-  const registerSchema = z.object({
-    full_name: z.string().min(2, 'Name is required'),
-    email: z.string().email('Enter a valid email'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string(),
-  }).refine((d) => d.password === d.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
+  const registerSchema = z
+    .object({
+      full_name: z.string().min(2, 'Name must be at least 2 characters'),
+      email: z.string().min(1, 'Email is required').email('Enter a valid email'),
+      password: z.string().min(8, 'Password must be at least 8 characters'),
+      confirmPassword: z.string().min(1, 'Please confirm your password'),
+    })
+    .refine((d) => d.password === d.confirmPassword, {
+      message: 'Passwords do not match',
+      path: ['confirmPassword'],
+    });
 
   type RegisterForm = z.infer<typeof registerSchema>;
 

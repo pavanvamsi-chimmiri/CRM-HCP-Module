@@ -10,6 +10,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "001"
 down_revision: Union[str, None] = None
@@ -73,13 +74,18 @@ def upgrade() -> None:
     op.create_index(op.f("ix_contacts_owner_id"), "contacts", ["owner_id"], unique=False)
 
     op.execute("CREATE TYPE deal_stage AS ENUM ('lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost')")
+    deal_stage = postgresql.ENUM(
+        "lead", "qualified", "proposal", "negotiation", "closed_won", "closed_lost",
+        name="deal_stage",
+        create_type=False,
+    )
 
     op.create_table(
         "deals",
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("value", sa.Numeric(precision=15, scale=2), nullable=False),
-        sa.Column("stage", sa.Enum("lead", "qualified", "proposal", "negotiation", "closed_won", "closed_lost", name="deal_stage"), nullable=False),
+        sa.Column("stage", deal_stage, nullable=False),
         sa.Column("expected_close_date", sa.Date(), nullable=True),
         sa.Column("company_id", sa.UUID(), nullable=True),
         sa.Column("contact_id", sa.UUID(), nullable=True),
