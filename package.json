@@ -1,0 +1,34 @@
+{
+  "name": "ai-crm",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI CRM - Enterprise Customer Relationship Management Platform",
+  "scripts": {
+    "dev": "docker compose up",
+    "dev:build": "docker compose up --build",
+    "dev:down": "docker compose down",
+    "dev:logs": "docker compose logs -f",
+    "frontend:dev": "npm run dev --prefix frontend",
+    "frontend:build": "npm run build --prefix frontend",
+    "frontend:install": "npm install --prefix frontend",
+    "backend:dev": "cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "setup": "bash scripts/setup.sh"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "crm",
+    "ai",
+    "fastapi",
+    "react",
+    "langgraph",
+    "groq"
+  ],
+  "license": "UNLICENSED"
+}
