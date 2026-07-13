@@ -42,7 +42,7 @@ export function SettingsPage() {
     }
   }, [user, reset]);
 
-  const onSubmit = async (_data: ProfileForm) => {
+  const onSubmit = async () => {
     toast.success('Profile settings saved');
   };
 

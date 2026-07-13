@@ -4,11 +4,11 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.groq_service import SummarizeRequest, get_groq_service
 from app.crud import hcp as hcp_crud
 from app.crud import interaction as interaction_crud
 from app.models import InteractionType, Sentiment, User
 from app.schemas.common import PaginatedResponse
-from app.ai.groq_service import SummarizeRequest, get_groq_service
 from app.schemas.interaction import (
     InteractionCreate,
     InteractionRead,

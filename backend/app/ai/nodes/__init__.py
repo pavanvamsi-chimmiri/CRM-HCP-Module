@@ -8,11 +8,11 @@ from app.ai.nodes.tool_nodes import (
     run_search_hcp_tool,
     run_summarize_interaction_tool,
 )
-from app.ai.nodes.validation import validate_entities
 
 # Backward-compatible aliases used by older imports/tests
 from app.ai.nodes.tool_nodes import run_log_interaction_tool as save_interaction
 from app.ai.nodes.tool_nodes import run_recommend_followup_tool as generate_recommendations
+from app.ai.nodes.validation import validate_entities
 
 __all__ = [
     "detect_intent",

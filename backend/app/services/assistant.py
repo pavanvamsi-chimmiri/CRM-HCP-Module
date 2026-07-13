@@ -102,7 +102,7 @@ class AssistantService:
         if content_type not in ALLOWED_AUDIO_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=f"Unsupported audio format. Allowed: mp3, wav, m4a, webm, ogg",
+                detail="Unsupported audio format. Allowed: mp3, wav, m4a, webm, ogg",
             )
 
         whisper = get_whisper_service()
