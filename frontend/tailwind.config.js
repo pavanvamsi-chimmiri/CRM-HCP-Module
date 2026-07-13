@@ -17,9 +17,19 @@ export default {
           900: '#1e3a8a',
           950: '#172554',
         },
+        medical: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        medical: '0 1px 3px 0 rgba(37, 99, 235, 0.08), 0 1px 2px -1px rgba(37, 99, 235, 0.08)',
       },
     },
   },
