@@ -31,5 +31,12 @@ class AgentState(TypedDict, total=False):
     saved_hcp_id: str | None
     interaction_saved: bool
 
+    # Tool outputs
+    tool_results: dict
+    search_results: list[dict]
+    summary: str
+    summary_key_points: list[str]
+    summary_outcome_highlight: str
+
     # Output
     response: str

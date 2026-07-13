@@ -1,9 +1,12 @@
 from app.ai.graph import (
+    EDIT_INTERACTION_TOOL,
     ENTITY_EXTRACTION,
     GENERATE_RESPONSE,
     INTENT_DETECTION,
-    RECOMMENDATION,
-    SAVE_INTERACTION,
+    LOG_INTERACTION_TOOL,
+    RECOMMEND_FOLLOWUP_TOOL,
+    SEARCH_HCP_TOOL,
+    SUMMARIZE_INTERACTION_TOOL,
     VALIDATION,
     build_hcp_agent_graph,
     compile_hcp_agent_graph,
@@ -17,8 +20,11 @@ def test_graph_has_all_nodes() -> None:
         INTENT_DETECTION,
         ENTITY_EXTRACTION,
         VALIDATION,
-        RECOMMENDATION,
-        SAVE_INTERACTION,
+        RECOMMEND_FOLLOWUP_TOOL,
+        LOG_INTERACTION_TOOL,
+        SEARCH_HCP_TOOL,
+        SUMMARIZE_INTERACTION_TOOL,
+        EDIT_INTERACTION_TOOL,
         GENERATE_RESPONSE,
     }
     assert expected.issubset(node_names)
