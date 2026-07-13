@@ -1,13 +1,23 @@
 from datetime import datetime
+from enum import Enum as PyEnum
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, Enum, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     pass
+
+
+def pg_enum(enum_class: type[PyEnum], name: str) -> Enum:
+    """PostgreSQL enum using Python enum values (e.g. in_person), not names (IN_PERSON)."""
+    return Enum(
+        enum_class,
+        name=name,
+        values_callable=lambda choices: [item.value for item in choices],
+    )
 
 
 class TimestampMixin:

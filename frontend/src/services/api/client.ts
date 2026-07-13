@@ -33,9 +33,15 @@ apiClient.interceptors.response.use(
 
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      return 'Network error — check that the backend is running and reachable';
+    }
     const detail = error.response?.data?.detail;
     if (typeof detail === 'string') return detail;
     if (Array.isArray(detail)) return detail.map((d) => d.msg).join(', ');
+    if (error.response.status >= 500) {
+      return 'Server error — please try again or contact support';
+    }
     return error.message;
   }
   if (error instanceof Error) return error.message;
