@@ -25,7 +25,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session")
 async def setup_database() -> AsyncGenerator[None, None]:
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -36,7 +36,7 @@ async def setup_database() -> AsyncGenerator[None, None]:
 
 
 @pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
+async def db_session(setup_database) -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionTest() as session:
         yield session
         await session.rollback()

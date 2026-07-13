@@ -38,6 +38,14 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
 
+    # Groq / AI Agent
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "gemma2-9b-it"
+    GROQ_MAX_TOKENS: int = 4096
+    GROQ_TEMPERATURE: float = 0.3
+    AI_AGENT_ENABLED: bool = True
+    AI_MAX_CONVERSATION_HISTORY: int = 20
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: str | list[str]) -> str:
