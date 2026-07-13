@@ -39,8 +39,15 @@ export function getErrorMessage(error: unknown): string {
     const detail = error.response?.data?.detail;
     if (typeof detail === 'string') return detail;
     if (Array.isArray(detail)) return detail.map((d) => d.msg).join(', ');
+    if (error.response.status === 502 || error.response.status === 503) {
+      return typeof detail === 'string'
+        ? detail
+        : 'AI service is temporarily unavailable — please try again';
+    }
     if (error.response.status >= 500) {
-      return 'Server error — please try again or contact support';
+      return typeof detail === 'string'
+        ? detail
+        : 'Server error — please try again or contact support';
     }
     return error.message;
   }
