@@ -199,7 +199,7 @@ Samples: {samples}
 
 
 class GroqService:
-    """Centralized Groq API service using gemma2-9b-it with structured JSON outputs."""
+    """Centralized Groq API service with structured JSON outputs."""
 
     def __init__(
         self,

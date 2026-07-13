@@ -1,12 +1,21 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = _BACKEND_ROOT.parent
+
+
+def _env_files() -> tuple[str, ...]:
+    candidates = (_REPO_ROOT / ".env", _BACKEND_ROOT / ".env", Path(".env"))
+    return tuple(str(path) for path in candidates if path.is_file())
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_env_files(),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
@@ -40,7 +49,7 @@ class Settings(BaseSettings):
 
     # Groq / AI Agent
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "gemma2-9b-it"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     GROQ_WHISPER_MODEL: str = "whisper-large-v3-turbo"
     GROQ_MAX_TOKENS: int = 4096
     GROQ_TEMPERATURE: float = 0.3
