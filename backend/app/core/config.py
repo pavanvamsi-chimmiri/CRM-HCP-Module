@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     # Groq / AI Agent
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "gemma2-9b-it"
+    GROQ_WHISPER_MODEL: str = "whisper-large-v3-turbo"
     GROQ_MAX_TOKENS: int = 4096
     GROQ_TEMPERATURE: float = 0.3
     AI_AGENT_ENABLED: bool = True

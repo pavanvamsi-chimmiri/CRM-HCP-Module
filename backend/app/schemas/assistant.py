@@ -33,3 +33,16 @@ class AssistantParseResponse(BaseModel):
     missing_fields: list[str] = Field(default_factory=list)
     follow_up_questions: list[str] = Field(default_factory=list)
     is_complete: bool = False
+
+
+class VoiceUploadResponse(BaseModel):
+    transcript: str
+    summary: str
+    key_points: list[str] = Field(default_factory=list)
+    outcome_highlight: str = ""
+    message: str
+    form_fields: AssistantFormFields
+    extracted_fields: dict = Field(default_factory=dict)
+    missing_fields: list[str] = Field(default_factory=list)
+    follow_up_questions: list[str] = Field(default_factory=list)
+    is_complete: bool = False

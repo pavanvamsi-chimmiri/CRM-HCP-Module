@@ -29,3 +29,18 @@ export interface AssistantParseResponse {
   follow_up_questions: string[];
   is_complete: boolean;
 }
+
+export interface VoiceUploadResponse {
+  transcript: string;
+  summary: string;
+  key_points: string[];
+  outcome_highlight: string;
+  message: string;
+  form_fields: AssistantFormFields;
+  extracted_fields: Record<string, unknown>;
+  missing_fields: string[];
+  follow_up_questions: string[];
+  is_complete: boolean;
+}
+
+export type VoiceProcessingStage = 'idle' | 'uploading' | 'transcribing' | 'extracting' | 'done' | 'error';

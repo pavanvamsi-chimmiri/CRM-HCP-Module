@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,11 +8,8 @@ import {
   Calendar,
   Clock,
   FileText,
-  Mic,
-  MicOff,
   Pencil,
   Save,
-  Sparkles,
   Stethoscope,
   Trash2,
   Users,
@@ -32,10 +29,10 @@ import {
   deleteInteraction,
   fetchInteraction,
   fetchInteractions,
-  summarizeVoiceNote,
   updateInteraction,
 } from '@/store/slices/interactionsSlice';
 import { AIAssistantPanel } from '@/components/assistant/AIAssistantPanel';
+import { VoiceUploadPanel } from '@/components/assistant/VoiceUploadPanel';
 import { INTERACTION_TYPES, SENTIMENT_OPTIONS } from '@/utils';
 import type { Interaction, InteractionType, Sentiment } from '@/types';
 import type { AssistantFormFields } from '@/types/assistant';
@@ -129,22 +126,17 @@ export function LogInteractionPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { isSubmitting, isSummarizing, isLoading, items } = useAppSelector((s) => s.interactions);
+  const { isSubmitting, isLoading, items } = useAppSelector((s) => s.interactions);
 
   const [editingId, setEditingId] = useState<string | null>(id ?? null);
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [summaryPreview, setSummaryPreview] = useState<string | null>(null);
   const [showEditPicker, setShowEditPicker] = useState(false);
-
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
-    getValues,
     watch,
     formState: { errors, isDirty },
   } = useForm<LogInteractionForm>({
@@ -161,7 +153,6 @@ export function LogInteractionPage() {
         reset(interactionToFormValues(interaction));
         setEditingId(interactionId);
         setIsReadOnly(readOnly);
-        setSummaryPreview(null);
         navigate(`/log-interaction/${interactionId}`, { replace: true });
       } catch (error) {
         toast.error(typeof error === 'string' ? error : 'Failed to load interaction');
@@ -221,7 +212,6 @@ export function LogInteractionPage() {
     reset(getDefaultValues());
     setEditingId(null);
     setIsReadOnly(false);
-    setSummaryPreview(null);
     setShowEditPicker(false);
     dispatch(clearCurrent());
     if (id) {
@@ -236,35 +226,6 @@ export function LogInteractionPage() {
       return;
     }
     setShowEditPicker((prev) => !prev);
-  };
-
-  const handleSummarize = async () => {
-    const note = getValues('voice_note')?.trim();
-    if (!note) {
-      toast.error('Add a voice note or transcript before summarizing');
-      return;
-    }
-
-    try {
-      const result = await dispatch(
-        summarizeVoiceNote({ text: note, doctorName: getValues('doctor_name') || undefined })
-      ).unwrap();
-
-      setSummaryPreview(result.summary);
-
-      if (result.outcome_highlight) {
-        setValue('outcome', result.outcome_highlight, { shouldDirty: true });
-      }
-      if (result.key_points.length > 0) {
-        const existing = getValues('topics')?.trim();
-        const points = result.key_points.join(', ');
-        setValue('topics', existing ? `${existing}, ${points}` : points, { shouldDirty: true });
-      }
-
-      toast.success('Voice note summarized');
-    } catch (error) {
-      toast.error(typeof error === 'string' ? error : 'Failed to summarize voice note');
-    }
   };
 
   const handleApplyAssistantFields = useCallback(
@@ -302,58 +263,6 @@ export function LogInteractionPage() {
     },
     [setValue]
   );
-
-  const toggleRecording = () => {
-    const win = window as Window & {
-      webkitSpeechRecognition?: new () => SpeechRecognition;
-    };
-    const SpeechRecognitionCtor = win.SpeechRecognition ?? win.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionCtor) {
-      toast.error('Speech recognition is not supported in this browser');
-      return;
-    }
-
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognitionCtor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    let transcript = getValues('voice_note') || '';
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const chunk = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          transcript += `${chunk} `;
-        } else {
-          interim += chunk;
-        }
-      }
-      setValue('voice_note', `${transcript}${interim}`.trim(), { shouldDirty: true });
-    };
-
-    recognition.onerror = () => {
-      setIsRecording(false);
-      toast.error('Voice capture failed. Type your note instead.');
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsRecording(true);
-    toast.success('Listening… speak your visit notes');
-  };
 
   if (isLoading && id) {
     return <LoadingSpinner label="Loading interaction..." />;
@@ -507,43 +416,25 @@ export function LogInteractionPage() {
             />
           </div>
 
-          <Card
-            title="Voice Note"
-            description="Dictate or paste visit notes for AI summarization"
-            action={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={toggleRecording}
-                disabled={formDisabled}
-                className={isRecording ? 'text-red-600' : ''}
-              >
-                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                {isRecording ? 'Stop' : 'Record'}
-              </Button>
+          <VoiceUploadPanel
+            onApplyFields={handleApplyAssistantFields}
+            onTranscript={(transcript) =>
+              setValue('voice_note', transcript, { shouldDirty: true })
             }
-          >
+            disabled={formDisabled}
+          />
+
+          <Card title="Transcript" description="Auto-filled from voice upload">
             <Textarea
               label="Voice Note Transcript"
-              placeholder="Tap Record to dictate, or type your raw visit notes here..."
-              rows={8}
+              placeholder="Upload audio above to generate a transcript…"
+              rows={4}
               disabled={formDisabled}
               {...register('voice_note')}
             />
             <p className="mt-2 text-xs text-slate-400">
               {voiceNote?.length ?? 0} characters
             </p>
-
-            {summaryPreview && (
-              <div className="mt-4 rounded-lg border border-brand-100 bg-brand-50/50 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-brand-700">
-                  <Sparkles className="h-4 w-4" />
-                  AI Summary
-                </div>
-                <p className="text-sm leading-relaxed text-slate-700">{summaryPreview}</p>
-              </div>
-            )}
           </Card>
 
           {showEditPicker && (
@@ -597,18 +488,6 @@ export function LogInteractionPage() {
                 {isReadOnly ? 'Enable Edit' : 'Edit'}
               </Button>
 
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                onClick={handleSummarize}
-                isLoading={isSummarizing}
-                disabled={formDisabled || !voiceNote?.trim()}
-              >
-                <Sparkles className="h-4 w-4" />
-                Summarize Voice Note
-              </Button>
-
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <Button type="button" variant="ghost" onClick={handleClear}>
                   <X className="h-4 w-4" />
@@ -633,7 +512,7 @@ export function LogInteractionPage() {
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <FileText className="h-3.5 w-3.5" />
-                Use Summarize to auto-fill outcome and topics from voice notes
+                Upload audio to transcribe, summarize, and auto-fill the form
               </div>
             </div>
           </Card>
